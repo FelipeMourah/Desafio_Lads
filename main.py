@@ -1,38 +1,46 @@
 import requests
 import matplotlib.pyplot as plt
+import time
 
-linguagens_validas = ["Python","JavaScript","TypeScript","Java","C#","C++","PHP","C","GO","Ruby","Rust","Kotlin","Swift","Dart","Lua","Objective-C","Perl","R","Scala"]
-
-def get_trending_languages(top_n=5):
-    url = "https://api.github.com/search/repositories?q=stars:>1&sort=stars"
-    headers = {"Accept": "application/vnd.github.v3+json"}
-    response = requests.get(url, headers=headers)
-    
-    if response.status_code != 200:
-        raise Exception("Erro ao acessar a API do GitHub")
-    
-    items = response.json()["items"]
-    
+def get_trending_languages_paginated(pages=10):
     language_count = {}
-    for repo in items:
-        language = repo.get("language")
-        if language and language in linguagens_validas:
-            language_count[language] = language_count.get(language,0) + 1
+
+    for page in range(1, pages + 1):
+        print(f"🔄 Buscando dados da página {page}...")
+        url = f"https://api.github.com/search/repositories?q=stars:>1&sort=stars&page={page}&per_page=100"
+        headers = {"Accept": "application/vnd.github.v3+json"}
+        response = requests.get(url, headers=headers)
+
+        if response.status_code != 200:
+            print(f" Erro na página {page}: {response.status_code}")
+            continue
+
+        items = response.json().get("items", [])
+        for repo in items:
+            language = repo.get("language")
+            if language:
+                language_count[language] = language_count.get(language, 0) + 1
+
+        time.sleep(1.5)  # Evita rate limite da API pública
 
     sorted_languages = sorted(language_count.items(), key=lambda x: x[1], reverse=True)
-    return sorted_languages[:top_n]
+    # vai retornar as 10 melhores
+    return sorted_languages[:10]  
 
 def plot_languages(data):
     languages, counts = zip(*data)
-    plt.figure(figsize=(12, 12))
+    plt.figure(figsize=(10, 8))
     plt.bar(languages, counts, color='darkblue')
-    plt.title("Top 5 Linguagens de Programação em Repositórios Populares no GitHub")
+    plt.title("As 10 Melhores Linguagens de Programação em Repositórios Populares no GitHub")
     plt.xlabel("Linguagens")
-    plt.ylabel("Quantidade de Repositórios por usúario")
-    plt.xticks(rotation=50)
+    plt.ylabel("Quantidade de Repositórios")
+    plt.xticks(rotation=45)
     plt.tight_layout()
     plt.savefig("grafico_linguagens.png")
+    print("📊 Gráfico salvo como grafico_linguagens.png")
 
 if __name__ == "__main__":
-    data = get_trending_languages()
-    plot_languages(data)
+    dados = get_trending_languages_paginated(pages=10)
+    for lang, count in dados:
+        print(f"{lang}: {count}")
+    plot_languages(dados)
