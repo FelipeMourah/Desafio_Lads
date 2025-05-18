@@ -26,7 +26,7 @@ Os dados são processados com Python e apresentados por meio de um gráfico gera
    ```bash
    git clone https://github.com/seu-usuario/github-languages-trend.git
    cd github-languages-trend
-```
+   ```
 (Opcional) Crie um ambiente virtual:
 
 ```bash
